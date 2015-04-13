@@ -1,0 +1,215 @@
+function initCreateJurisdiction() {
+    initDefaults();
+    changeOptions();
+}
+//Intialize defaults
+function initDefaults() {
+    //call to update test for 24x5 controls 
+    updateTest24x5Controls();
+    //call to update test sat controls 
+    updateTestSatControls();
+    //Update test Sunday Controls
+    updateTestSunControls();
+
+    //call to update Prod for 24x5 controls 
+    updateProd24x5Controls();
+    //call to update Prod sat controls 
+    updateProdSatControls();
+    //Update Prod Sunday Controls
+    updateProdSunControls();
+
+}
+//Change DOM based on the selection
+function changeOptions() {
+   // Prod 24x5 check box is checked
+    $("#IsTest24x5").click(function () {
+        //call to update test for 24x5 controls 
+        updateTest24x5Controls();
+    });
+    //IsSaturdayAvailable check box is checked
+    $("#IsTestAvailableSaturday").click(function () {
+        //call to update test sat controls 
+        updateTestSatControls();
+    });
+    //IsSundayAvailable check box is checked
+    $("#IsTestAvailableSunday").click(function () {
+        updateTestSunControls();
+    });
+    //Prod 24x5 check box is checked
+    $("#IsProd24x5").click(function () {
+        updateProd24x5Controls();
+    });
+    //IsSaturdayAvailable check box is checked
+    $("#IsProdAvailableSaturday").click(function () {
+        /*If the Prod is available on Saturday then time entry is shown.else time entry is hidden */
+        updateProdSatControls();
+    });
+    //IsSundayAvailable check box is checked
+    $("#IsProdAvailableSunday").click(function () {
+        /*If the Prod is available on Sunday then time entry is shown.else time entry is hidden*/
+         updateProdSunControls();
+    });
+    }
+  //Update test 24x5 Controls
+    function updateTest24x5Controls() {
+        var TestAvailableStartTime = $('#TestAvailableStartTime').val();
+        var TestAvailableEndTime = $('#TestAvailableEndTime').val();
+        //When test is available 24/7 we do not need the time entry
+        if ($("#IsTest24x5").is(':checked')) {
+            $('#TestAvailableStartTime').hide();
+            $('#TestAvailableEndTime').hide();
+            $('label[for=TestAvailableStartTime]').hide();
+            $('label[for=TestAvailableEndTime]').hide();
+        }
+        else {
+            $('#TestAvailableStartTime').show();
+            $('#TestAvailableEndTime').show();
+            $('label[for=TestAvailableStartTime]').show();
+            $('label[for=TestAvailableEndTime]').show();
+            if ($.trim(TestAvailableStartTime).length === 0) {
+                $('#TestAvailableStartTime').val('00:00:00');
+            }
+            if ($.trim(TestAvailableEndTime).length === 0) {
+                $('#TestAvailableEndTime').val('23:59:59');
+            }
+        }
+    }
+
+    //Update test Saturday Controls
+    function updateTestSatControls() {
+        /*If the test is available on Saturday then time entry is shown.else time entry is hidden */
+        var TestAvailableSatStartTime = $('#TestAvailableSatStartTime').val();
+        var TestAvailableSatEndTime = $('#TestAvailableSatEndTime').val();
+
+        if ($("#IsTestAvailableSaturday").is(':checked')) {
+            $('#TestAvailableSatStartTime').show();
+            $('#TestAvailableSatEndTime').show();
+            $('label[for=TestAvailableSatStartTime]').show();
+            $('label[for=TestAvailableSatEndTime]').show();
+            }
+        else {
+            $('#TestAvailableSatStartTime').hide();
+            $('#TestAvailableSatEndTime').hide();
+            $('label[for=TestAvailableSatStartTime]').hide();
+            $('label[for=TestAvailableSatEndTime]').hide();
+             }
+            if ($.trim(TestAvailableSatStartTime).length === 0) {
+                $('#TestAvailableSatStartTime').val('00:00:00');
+            }
+            if ($.trim(TestAvailableSatEndTime).length === 0) {
+                $('#TestAvailableSatEndTime').val('23:59:59');
+
+            }
+            
+        }
+   
+    //Update test Sunday Controls
+    function updateTestSunControls() {
+        /*If the test is available on Sunday then time entry is shown.else time entry is hidden */
+        var TestAvailableSunStartTime = $('#TestAvailableSunStartTime').val();
+        var TestAvailableSunEndTime = $('#TestAvailableSunEndTime').val();
+
+        if ($("#IsTestAvailableSunday").is(':checked')) {
+            $('#TestAvailableSunStartTime').show();
+            $('#TestAvailableSunEndTime').show();
+            $('label[for=TestAvailableSunStartTime]').show();
+            $('label[for=TestAvailableSunEndTime]').show();
+                }
+        else {
+            $('#TestAvailableSunStartTime').hide();
+            $('#TestAvailableSunEndTime').hide();
+            $('label[for=TestAvailableSunStartTime]').hide();
+            $('label[for=TestAvailableSunEndTime]').hide();
+
+            }
+            if ($.trim(TestAvailableSunStartTime).length === 0) {
+                $('#TestAvailableSunStartTime').val('00:00:00');
+            }
+            if ($.trim(TestAvailableSunEndTime).length === 0) {
+                $('#TestAvailableSunEndTime').val('23:59:59');
+            }
+           
+        }
+ 
+    //Update Prod 24x5 Controls
+    function updateProd24x5Controls() {
+        var ProdAvailableStartTime = $('#ProdAvailableStartTime').val();
+        var ProdAvailableEndTime = $('#ProdAvailableEndTime').val();
+        //When test is available 24/7 we do not need the time entry
+        if ($("#IsProd24x5").is(':checked')) {
+            $('#ProdAvailableStartTime').hide();
+            $('#ProdAvailableEndTime').hide();
+            $('label[for=ProdAvailableStartTime]').hide();
+            $('label[for=ProdAvailableEndTime]').hide();
+        }
+        else {
+            $('#ProdAvailableStartTime').show();
+            $('#ProdAvailableEndTime').show();
+            $('label[for=ProdAvailableStartTime]').show();
+            $('label[for=ProdAvailableEndTime]').show();
+            if ($.trim(ProdAvailableStartTime).length === 0) {
+                $('#ProdAvailableStartTime').val('00:00:00');
+            }
+            if ($.trim(ProdAvailableEndTime).length === 0) {
+                $('#ProdAvailableEndTime').val('23:59:59');
+            }
+        }
+    }
+
+    //Update Prod Saturday Controls
+    function updateProdSatControls() {
+        /*If the test is available on Saturday then time entry is shown.else time entry is hidden */
+        var ProdAvailableSatStartTime = $('#ProdAvailableSatStartTime').val();
+        var ProdAvailableSatEndTime = $('#ProdAvailableSatEndTime').val();
+
+        if ($("#IsProdAvailableSaturday").is(':checked')) {
+            $('#ProdAvailableSatStartTime').show();
+            $('#ProdAvailableSatEndTime').show();
+            $('label[for=ProdAvailableSatStartTime]').show();
+            $('label[for=ProdAvailableSatEndTime]').show();
+        }
+        else {
+            $('#ProdAvailableSatStartTime').hide();
+            $('#ProdAvailableSatEndTime').hide();
+            $('label[for=ProdAvailableSatStartTime]').hide();
+            $('label[for=ProdAvailableSatEndTime]').hide();
+        }
+        if ($.trim(ProdAvailableSatStartTime).length === 0) {
+            $('#ProdAvailableSatStartTime').val('00:00:00');
+        }
+        if ($.trim(ProdAvailableSatEndTime).length === 0) {
+            $('#ProdAvailableSatEndTime').val('23:59:59');
+
+        }
+
+    }
+
+    //Update Prod Sunday Controls
+    function updateProdSunControls() {
+        /*If the test is available on Sunday then time entry is shown.else time entry is hidden */
+        var ProdAvailableSunStartTime = $('#ProdAvailableSunStartTime').val();
+        var ProdAvailableSunEndTime = $('#ProdAvailableSunEndTime').val();
+
+        if ($("#IsProdAvailableSunday").is(':checked')) {
+            $('#ProdAvailableSunStartTime').show();
+            $('#ProdAvailableSunEndTime').show();
+            $('label[for=ProdAvailableSunStartTime]').show();
+            $('label[for=ProdAvailableSunEndTime]').show();
+        }
+        else {
+            $('#ProdAvailableSunStartTime').hide();
+            $('#ProdAvailableSunEndTime').hide();
+            $('label[for=ProdAvailableSunStartTime]').hide();
+            $('label[for=ProdAvailableSunEndTime]').hide();
+
+        }
+        if ($.trim(ProdAvailableSunStartTime).length === 0) {
+            $('#ProdAvailableSunStartTime').val('00:00:00');
+        }
+        if ($.trim(ProdAvailableSunEndTime).length === 0) {
+            $('#ProdAvailableSunEndTime').val('23:59:59');
+        }
+
+    }
+
+
