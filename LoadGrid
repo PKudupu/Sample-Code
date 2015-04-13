@@ -1,0 +1,101 @@
+/// <reference path="jquery-1.5.1-vsdoc.js" />
+var jurisdictionToolbar = null;
+var confirmationMessage = "Are you sure you want to delete Jurisdiction?";
+var entity = "Jurisdiction";
+//Init function calls
+$(document).ready(function () {
+    initToolbar();
+    initGrid();
+  });
+//Load tool bar for creating Jurisdiction
+function initToolbar() {
+
+    jurisdictionToolbar = new dhtmlXToolbarObject("divToolbar", "dhx_skyblue");
+    jurisdictionToolbar.loadXML("../../Layout/GetToolbarXML?toolbar=Jurisdiction", null);
+
+}
+//initialize grid for Jurisdiction
+function initGrid() {
+    jurisdictionGrid = new dhtmlXGridObject('gridbox');
+    jurisdictionGrid.setImagePath("../../Components/DHTMLX/dhtmlxGrid/codebase/imgs/");
+    jurisdictionGrid.setHeader("Name,Short Name,Screen Name,Screen Short Name,Time Zone,Is Test 24x5,Is Test Available Sat,Is Test Available Sun,Is Prod 24x5,Is Prod Available Sat,Is Prod Available Sun,Remove");
+    jurisdictionGrid.attachHeader("#text_filter,#text_filter,#text_filter,#text_filter,#select_filter,#select_filter,#select_filter,#select_filter,#select_filter,#select_filter,#select_filter,");
+    jurisdictionGrid.setInitWidths("*,80,140,80,80,80,80,80,80,80,80,80");
+    jurisdictionGrid.setColAlign("left,left,left,left,center,center,center,center,center,center,center,center,center");
+    jurisdictionGrid.setColTypes("ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,ro,link");
+    jurisdictionGrid.setColSorting("str,str,str,str,str,str,str,str,str,str,str,str");
+    jurisdictionGrid.enableMultiselect(false);
+    jurisdictionGrid.enableSmartRendering(true);
+    jurisdictionGrid.init();
+    jurisdictionGrid.setSkin("dhx_skyblue");
+
+    jurisdictionGrid.load("../../Jurisdiction/GridData", "json");
+    jurisdictionGrid.attachEvent("onRowDblClicked", updateJurisdiction);
+    jurisdictionGrid.attachEvent("onRowSelect", function (rowId, columnIndex) {
+    });
+
+    jurisdictionGrid.attachEvent("onXLS", function () {
+        document.getElementById("imgLoading").style.display = "block";
+        document.getElementById("txtLoading").style.display = "block";
+    });
+
+    jurisdictionGrid.attachEvent("onXLE", function () {
+        document.getElementById("imgLoading").style.display = "none";
+        document.getElementById("txtLoading").style.display = "none";
+    });
+
+    jurisdictionGrid.enableHighlighting(1);
+
+}
+//Ajax method call to fire dialog box for Jurisdiction
+function createJurisdiction() {
+
+    $.ajax({
+         url: "../Jurisdiction/Create",
+        success: function (data) {
+            $("#dialog").html(data);
+            $("#dialog").dialog({
+                modal: true,
+                cache: false,
+                draggable: false,
+                resizable: false,
+                title: "Create Jurisdiction",
+                width: 650,
+                height: 510
+            });
+            initCreateJurisdiction();
+        }
+    });
+   
+}
+//Ajax method call to fire dialog box to update Jurisdiction
+function updateJurisdiction(rowID) {
+
+    $.ajax({
+        url: "../Jurisdiction/Update?id=" + rowID,
+        success: function (data) {
+            $("#dialog").html(data);
+            $("#dialog").dialog({
+                modal: true,
+                cache: false,
+                draggable: false,
+                resizable: false,
+                title: "Update Jurisdiction",
+                width: 650,
+                height: 510
+            });
+            initCreateJurisdiction();
+        }
+    });
+
+}
+//Delete functionality with confirm message
+function Delete(id) {
+    DeleteDialog(id, entity, confirmationMessage);
+}
+
+
+
+
+
+
