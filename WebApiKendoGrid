@@ -1,0 +1,1288 @@
+try {
+    
+    //Hard Coded Values
+    var customerHoldMessage = "This customer is on hold.";
+    var customerActiveLocationMessage = "This customer is inactive";
+    var privateServiceMessage = "Parts and Labor Charges: $100 minimum charge, plus $1 per minute Labor after the first 30 minutes, plus the retail cost of Parts.";
+    var refundMessage = "Please enter a refund amount.";
+    var callTypesMessage1 = "Invalid call type value. \r\n Please choose following call types S, SA, SO, BS, BO, R, SM, C, and U ";
+    var callTypesMessage2 = "Invalid call type value. \r\n Please choose following call types Z, ZC, ZS and ZX ";
+    var billable = "true";
+    var customerHold = "true";
+    var customerActiveLocation = "true";
+    var callStatusMessage = "Service call is either Scheduled, Closed or Completed";
+    var roomNumberEmptyMessage = "Room number is empty";
+    var csrUsNE = "CSR USA with no edit";
+    var csrCanadaNE = "CSR canada with no edit";
+    var saveErrorMessage = "Unable to save the appointment \r\n Please try again.";
+    var cancelTicketErrorMessage = "Error occured cancelling the Ticket.\r\n please try again.";
+    var excetptionMessage = "There was an internal error. Please contact IT support team. \r\n Details: ";
+    var problemDescriptionEmptyMessage = "Service ticket was not created as equipment and problem description cannot be empty.Please try again.";
+
+        $(document).ready(function () {           
+          
+        //serevice call entry Cancel click function
+        $("#btn_Cancel").click(function () {
+            closePopup();
+            $("#eqtooltip").hide();
+            $("#hdnwindow").val(0);
+            $(".k-overlay").css("display", "none");
+        });
+
+        //success message popup ok button click function
+        $("#successBtnOk").click(function () {          
+            successMessage(true);
+
+            var locKeyId = $("#hdnLockeyId").val();
+            var subLocKeyId = $("#hdnSubLockeyId").val();
+            var uln = $("#hdnULN").val();
+            var roomCode = $("#hdnRoomCode").val();
+            var country = $("#country").val();
+            //Session data
+            var userDetails = $.localStorage;
+            var userKeyId = userDetails.get('userKeyId');
+            //
+            var isChecked = $('#chkAppointments').is(':checked');
+            //Show all landry rooms appointments 
+            $("#chkText").show();
+            if (isChecked) {
+                $("#gridLable").html("Showing appointments for ( " + uln.trim() + " )");
+                roomCode = "";
+            } else {//Show particular room appointments
+                $("#gridLable").html("Showing appointments for ( " + uln.trim() + "-" + roomCode + ")");
+            }
+
+            var uri = url + 'api/appointment?uln=' + uln.trim() + '&locKeyId=' + locKeyId.trim() + '&subLocKeyId=' + subLocKeyId.trim() + '&roomCode=' + roomCode.trim() + '&country=' + country.trim() + '&userKeyId=' + userKeyId;
+            resolutionsGridPost(uri);
+
+            $("#resolution").show();
+            $(".k-overlay").css("display", "none");
+            return false;
+        });
+
+        //error message popup ok button click function
+        $("#errorBtnOk").click(function () {
+            errorMessage(true);
+            $(".k-overlay").css("display", "none");
+            return false;
+        });
+
+        //Inactive , onhold and private service message popup ok button click function
+        $("#msgBtnOk").click(function () {
+            message(true);
+            $(".k-overlay").css("display", "none");
+        });
+
+        //popup window  center function
+        jQuery.fn.center = function () {
+            this.css("position", "absolute");
+            this.css("top", Math.max(0, (($(window).height() - $(this).outerHeight()) / 2) +
+                                                        $(window).scrollTop()) + "px");
+            this.css("left", Math.max(0, (($(window).width() - $(this).outerWidth()) / 2) +
+                                                        $(window).scrollLeft()) + "px");
+            return this;
+        }; //All popup's close icon click custom function
+        $(document).on("click", ".k-icon ,.k-close", function () {
+           
+            var winHeight = ($(window).height() - 512) + "px";
+            $(".k-window").css("margin-top", "0");
+
+            $(".k-window").center();
+            var title = $(this).parent().parent().prev().html();
+
+            if (title == "Error Message") {
+                errorMessage(true);
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            if (title == "Success Message") {
+                successMessage(true);
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            if (title == "Message") {
+                message(true);
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            if (title == "Confirmation Message") {
+                confirmationWindow(true);
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            var windowValue;
+            if (title == "ServiceCall Details") {
+                windowValue = $(this).html();
+                if (windowValue.trim() == "Minimize") {
+                    $(".k-window").css("margin-top", winHeight);
+                    $(".k-window").css("left", "20px");
+                    $(".k-window").css("width", "200px");
+                    $("#hdnwindow").val(1);
+                }
+                if (windowValue.trim() == "Maximize") {
+                    $("#hdnwindow").val(0);
+                }
+                if (windowValue.trim() == "Restore") {
+                    $("#hdnwindow").val(0);
+                }
+                if (windowValue.trim() == "Close") {
+                    errorMessage(true);
+                    message(true);
+                    confirmationWindow(true);                   
+                    $("#hdnwindow").val(0);
+                    $('#chkCancelTicket').prop('checked', false);
+                    $("#descriptionDdl").val(1);
+                    $("#eqtooltip").hide();
+                    $("#EquipmentID_00").removeAttr("readonly");
+                    $("#Problem_00").removeAttr("readonly");
+                    $("#serviceDescription").val("");
+                    $("#notes").val("");
+                    $(".k-overlay").css("display", "none");
+                }
+
+            }
+
+            if (title == "ServiceCall Details Cancel/Edit") {
+                windowValue = $(this).html();
+                if (windowValue.trim() == "Minimize") {
+                    $(".k-window").css("margin-top", winHeight);
+                    $(".k-window").css("left", "20px");
+                    $(".k-window").css("width", "200px");
+
+                    $("#hdnwindow").val(1);
+                }
+                if (windowValue.trim() == "Maximize") {
+                    $("#hdnwindow").val(0);
+                }
+                if (windowValue.trim() == "Restore") {
+                    $("#hdnwindow").val(0);
+                }
+                if (windowValue.trim() == "Close") {
+                    errorMessage(true);
+                    message(true);
+                    confirmationWindow(true);                   
+                    //myWindow.restore();
+                    $("#hdnwindow").val(0);
+                    $('#chkCancelTicket').prop('checked', false); 
+                    $("#descriptionDdl").val(1);
+                    $("#eqtooltip").hide();
+                    $("#EquipmentID_00").removeAttr("readonly");
+                    $("#Problem_00").removeAttr("readonly");
+                    $("#serviceDescription").val("");
+                    $("#notes").val("");
+                    $(".k-overlay").css("display", "none");
+                }
+
+
+            }
+            return false;
+        });
+
+        //Location grid  Uln double click funtion for service call entry popup..
+        $(document).on("dblclick", ".ULN", function () {
+
+            var hdnwindow = $("#hdnwindow").val();
+            if (hdnwindow == 0) {
+                closePopup();
+                //Loading image
+                $("#divLoader").attr("itemid", 0);
+                setTimeout(function () {
+                    var value = $("#divLoader").attr("itemid");
+                    if (value == "1") {
+                    } else {
+                        $("#divLoader").show();
+                    }
+                }, 3000);
+
+                var uln = $(this).val();
+                var locKeyId = $(this).attr("id");
+                var subLocKeyId = $(this).attr("name");
+                var country = $("#country").val();
+                var serviceCallId = "";
+                var callerName = $("#callerName").val();
+                var callerPhone = $("#callerPhone").val();
+                var equipmentId = "";
+                var apartmentNo = $("#apartmentNo").val();
+                var callType = $("#calltype").val();
+                var roomCode = $(this).attr("size");
+                $("#hdnRoomCode").val(roomCode);
+                //Session data
+
+                var userDetails = $.localStorage;
+                var userKeyId = userDetails.get('userKeyId');
+                $("#divCancelTicket").css("display", "none");
+
+                var uri = url + 'api/appointment?locKeyId=' + locKeyId + '&subLocKeyId=' + subLocKeyId + '&country=' + country + '&serviceCallId=' + serviceCallId
+                            + '&uln=' + uln.trim() + '&callerName=' + callerName + '&callerPhone=' + callerPhone + '&equipmentId=' + equipmentId + '&apartmentNo='
+                            + apartmentNo + '&callType=' + callType + '&roomCode=' + roomCode + '&userKeyId=' + userKeyId;
+                //Error Message
+                var locationOnHold = $(this).attr("itemprop");
+                var activeLocation = $(this).attr("itemscope");               
+                var isBillableLocation = $(this).attr("itemtype");
+                       
+                $("#hdnlocationOnHold").val(locationOnHold);
+                $("#hdnactiveLocation").val(activeLocation);
+                $("#hdnIsBillable").val(isBillableLocation);
+
+                serviceCallEntry(uri);
+                $("#callerAddress").removeAttr("disabled");
+                $("#callerCity").removeAttr("disabled");
+                $("#callerState").removeAttr("disabled");
+                $("#callerZip").removeAttr("disabled");
+                $("#refundComments").removeAttr("disabled");
+                $("#requestAmount").removeAttr("disabled");
+
+                //Edit time Refund Skip
+                $("#hdnRefundSkip").val(0);
+
+                //macnhines grid above hyper link state maintaining..
+                var gridstate = $("#hdngridstate").val();
+                if (gridstate == 0) {
+                    $("#machonLoc").hide();
+                    $("#machonLaundryRoom").show();
+                }
+                else {
+                    $("#machonLoc").show();
+                    $("#machonLaundryRoom").hide();
+                }
+                $("#window_wnd_title").text("ServiceCall Details");
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            return false;
+        });
+      
+        //Location entire grid double click funtion for service call entry popup (except uln double click)
+        $(document).on("dblclick", ".PopupClass", function () {
+            
+            var hdnwindow = $("#hdnwindow").val();
+            if (hdnwindow == 0) {
+                closePopup();
+                //Loading image
+                $("#divLoader").attr("itemid", 0);
+                setTimeout(function () {
+                    var value = $("#divLoader").attr("itemid");
+                    if (value == "1") {
+                    } else {
+                        $("#divLoader").show();
+                    }
+                }, 3000);
+                var locKeyId = $(this).attr("id"); //LocationKeyID
+                var subLocKeyId = $(this).attr("lang"); //SubLocationKeyId
+                var country = $("#country").val();
+                var serviceCallId = "";
+                var uln = $(this).attr("dir");
+                var callerName = $("#callerName").val();
+                var callerPhone = $("#callerPhone").val();
+                var equipmentId = "";
+                var apartmentNo = $("#apartmentNo").val();
+                var roomCode = $(this).attr("itemid");
+
+                $("#hdnRoomCode").val(roomCode);
+                $("#hdnrmCode").val(roomCode);
+                $("#hdnULN").val(uln);
+                $("#hdnLockeyId").val(locKeyId);
+                $("#hdnSubLockeyId").val(subLocKeyId);
+                //Session data
+                var userDetails = $.localStorage;
+                var userKeyId = userDetails.get('userKeyId');
+
+                var callType = $("#calltype").val();
+                $("#divCancelTicket").css("display", "none");
+
+                var uri = url + 'api/appointment?locKeyId=' + locKeyId + '&subLocKeyId=' + subLocKeyId + '&country=' + country + '&serviceCallId=' + serviceCallId
+                            + '&uln=' + uln.trim() + '&callerName=' + callerName + '&callerPhone=' + callerPhone + '&equipmentId=' + equipmentId
+                            + '&apartmentNo=' + apartmentNo + '&callType=' + callType + '&roomCode=' + roomCode + '&userKeyId=' + userKeyId;
+
+                //Error Message
+                var locationOnHold = $(this).attr("itemprop");
+                var activeLocation = $(this).attr("itemscope");               
+                var isBillableLocation = $(this).attr("itemtype");
+
+                $("#hdnlocationOnHold").val(locationOnHold);
+                $("#hdnactiveLocation").val(activeLocation);
+                $("#hdnIsBillable").val(isBillableLocation);
+                
+
+                serviceCallEntry(uri);
+
+                $("#callerAddress").removeAttr("disabled");
+                $("#callerCity").removeAttr("disabled");
+                $("#callerState").removeAttr("disabled");
+                $("#callerZip").removeAttr("disabled");
+                $("#refundComments").removeAttr("disabled");
+                $("#requestAmount").removeAttr("disabled");
+                $("#deliveryMethodDdl").removeAttr('disabled');
+                $("#paymentTypeDdl").removeAttr('disabled');
+                $("#refundTypeDdl").removeAttr('disabled');
+                $("#categoryDdl").removeAttr('disabled');
+
+                $("#gridtable").show();             
+               
+                //macnhines grid above hyper link state maintaining..
+                var gridstate = $("#hdngridstate").val();
+                if (gridstate == 0) {
+                    $("#machonLoc").hide();
+                    $("#machonLaundryRoom").show();
+                    var machinesOn = "Machines in Laundry Room";
+                    var machinelocationuri = url + 'api/equipment?uln=' + uln.trim() + '&machinesOn=' + machinesOn + '&roomcode=' + roomCode + '&country=' + country + '&userKeyId=' + userKeyId;
+                    machinesGrid(machinelocationuri);
+                }
+                else {
+                    $("#machonLoc").show();
+                    $("#machonLaundryRoom").hide();
+                    var machinesuri = url + 'api/equipment?uln=' + uln.trim() + '&locKeyId=' + locKeyId.trim() + '&subLocKeyId=' + subLocKeyId.trim() + '&country=' + country.trim() + '&userKeyId=' + userKeyId;
+                    machinesGrid(machinesuri);
+                }
+
+                //Edit time Refund Skip
+                $("#hdnRefundSkip").val(0);
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            return false;
+        });
+
+        //Appointments grid service callid click for service call entry popup.
+        $(document).on("click", ".AppointmentGrid", function () {         
+            var hdnwindow = $("#hdnwindow").val();
+            if (hdnwindow == 0) {
+               
+                closePopup();
+                //Loading image    
+                $("#divLoader").attr("itemid", 0);
+                setTimeout(function () {
+                    var value = $("#divLoader").attr("itemid");
+                    if (value == "1") {
+                    } else {
+                        $("#divLoader").show();
+                    }
+                }, 3000);
+                
+                var serviceCallId = $(this).val();
+                var locKeyId = $("#hdnLockeyId").val(); //LocationKeyID
+                //var subLocKeyId = $("#hdnSubLockeyId").val();//SubLocationKeyId
+                var subLocKeyId = 0;
+                var country = $("#country").val();
+                var uln = $("#hdnULN").val();
+                var callerName = $(this).attr("name");
+                var callerPhone = $(this).attr("size");
+
+                var equipmentId = "";
+                var apartmentNo = $("#apartmentNo").val();
+                var callType = $(this).attr("itemprop");
+                if (callerPhone == "20")
+                { callerPhone = ""; }
+
+                var roomCode = $(this).attr("itemscope");
+                $("#hdnRoomCode").val(roomCode);
+                //Session data
+                var userDetails = $.localStorage;
+                var userKeyId = userDetails.get('userKeyId');
+                $("#divCancelTicket").css("display", "block");
+
+                var row = $(this).closest("tr");
+
+                var status = $("td", row).eq(3).text();
+                $("#hdnStatus").val(status);
+                $("#hdnCallText").val(callType);
+                callerName = encodeURIComponent(callerName);
+                callerPhone = encodeURIComponent(callerPhone);
+                var popupuri = url + 'api/appointment?locKeyId=' + locKeyId + '&subLocKeyId=' + subLocKeyId + '&country=' + country + '&serviceCallId=' + serviceCallId.trim()
+                                   + '&uln=' + uln.trim() + '&callerName=' + callerName + '&callerPhone=' + callerPhone + '&equipmentId=' + equipmentId + '&apartmentNo='
+                                   + apartmentNo + '&callType=' + callType + '&roomCode=' + roomCode + '&userKeyId=' + userKeyId;
+
+                serviceCallEntryAppointment(popupuri);
+                $("#window_wnd_title").text("ServiceCall Details Cancel/Edit");
+
+                $("#callerAddress").attr("disabled", "disabled");
+                $("#callerCity").attr("disabled", "disabled");
+                $("#callerState").attr("disabled", "disabled");
+                $("#callerZip").attr("disabled", "disabled");
+
+                $("#refundComments").attr("disabled", "disabled");
+                $("#requestAmount").attr("disabled", "disabled");
+
+                $("#deliveryMethodDdl").attr("disabled", "disabled");
+                $("#paymentTypeDdl").attr("disabled", "disabled");
+                $("#refundTypeDdl").attr("disabled", "disabled");
+                $("#categoryDdl").attr("disabled", "disabled");
+
+                //Edit time Refund Skip
+                $("#hdnRefundSkip").val(1);
+            }
+        });
+
+        //Machines grid equipment id click for service call entry popup.
+        $(document).on("click", ".MachinesGrid", function () {
+            var hdnwindow = $("#hdnwindow").val();
+            if (hdnwindow == 0) {
+                closePopup();
+                //Loading image
+                $("#divLoader").attr("itemid", 0);
+                setTimeout(function () {
+                    var value = $("#divLoader").attr("itemid");
+                    if (value == "1") {
+                    } else {
+                        $("#divLoader").show();
+                    }
+                }, 3000);
+
+                //selection Hilighting   
+                $('.MachinesGrid').each(function () {
+                    $(this).closest('tr').removeClass("highlight");
+                    $(this).closest('tr').removeClass("k-state-selected");
+                });
+                $(this).closest('tr').addClass("highlight");
+
+                var equipmentId = $(this).val();
+                var locKeyId = $("#hdnLockeyId").val();
+                //var subLocKeyId = $("#hdnSubLockeyId").val();
+                var subLocKeyId = 0;
+                var country = $("#country").val();
+                var serviceCallId = "";
+                var uln = $("#hdnULN").val();
+                var callerName = $("#callerName").val();
+                var callerPhone = $("#callerPhone").val();
+                var apartmentNo = $("#apartmentNo").val();
+                var callType = $("#calltype").val();
+
+                var roomCode = $(this).attr("id");
+                $("#hdnRoomCode").val(roomCode);
+                //Session data
+                var userDetails = $.localStorage;
+                var userKeyId = userDetails.get('userKeyId');
+                $("#divCancelTicket").css("display", "none");
+                $("#eqtooltip").hide();
+
+                var uri = url + 'api/appointment?locKeyId=' + locKeyId + '&subLocKeyId=' + subLocKeyId + '&country=' + country + '&serviceCallId=' + serviceCallId
+                                         + '&uln=' + uln + '&callerName=' + callerName + '&callerPhone=' + callerPhone + '&equipmentId=' + equipmentId + '&apartmentNo='
+                                         + apartmentNo + '&callType=' + callType + '&roomCode=' + roomCode + '&userKeyId=' + userKeyId;
+
+                //Error Message                   
+                var locationOnHold = $("#hdnlocationOnHold").val();
+                var activeLocation = $("#hdnactiveLocation").val();
+                var isBillableLocation = $("#hdnIsBillable").val();
+
+                $("#hdnlocationOnHold").val(locationOnHold);
+                $("#hdnactiveLocation").val(activeLocation);
+                $("#hdnIsBillable").val(isBillableLocation);
+
+                serviceCallEntry(uri);
+                $("#callerAddress").removeAttr("disabled");
+                $("#callerCity").removeAttr("disabled");
+                $("#callerState").removeAttr("disabled");
+                $("#callerZip").removeAttr("disabled");
+                $("#refundComments").removeAttr("disabled");
+                $("#requestAmount").removeAttr("disabled");
+                $("#deliveryMethodDdl").removeAttr('disabled');
+                $("#paymentTypeDdl").removeAttr('disabled');
+                $("#refundTypeDdl").removeAttr('disabled');
+                $("#categoryDdl").removeAttr('disabled');
+                $("#window_wnd_title").text("ServiceCall Details");
+                $("#Problem_00").focus();
+
+                //Edit time Refund Skip
+                $("#hdnRefundSkip").val(0);
+            }
+        });
+
+        //Service call entry page save button function..
+        $("#btnSave").click(function () {
+            //Loading image
+            $("#divLoader").attr("itemid", 0);
+            setTimeout(function () {
+                var value = $("#divLoader").attr("itemid");
+                if (value == "1") {
+                } else {
+                    $("#divLoader").show();
+                }
+            }, 3000);
+            //           
+            var txtServiceCallId = $("#serviceCallId").val();
+            var txtUln = $("#Uln").val();
+            var txtRequestedAmount = $("#requestAmount").val();
+            var txtContactName = $("#clrName").val();
+            var txtCallerPhone = $("#clrPhone").val();
+            var txtCallerApartment = $("#callerApartment").val();
+            var txtCallerAddress = $("#callerAddress").val();
+            var txtCallerCity = $("#callerCity").val();
+            var txtCallerState = $("#callerState").val();
+            var txtCallerZip = $("#callerZip").val();
+            var country = $("#country").val();
+            var refundType = $("#refundTypeDdl").val();
+            var paymentType = $("#paymentTypeDdl").val();
+            var refundCategory = $("#categoryDdl").val();
+            var dwellingType = $("#dwellingTypeDdl").val();
+            var txtRoomCode = $("#roomCode").val();
+            var txtContractType = $("#callTypeDdl").val();
+            var txtResidentManagerApartment = $("#residentManagerApartment").val();
+            var txtResidentManagerName = $("#residentManagerName").val();
+            var txtResidentManagerPhone = $("#residentManagerPhone").val();
+            var txtServiceGroup = $("#serviceGroup").val();
+            var txtPriority = $("#priority").val();
+            var txtServiceCallDate = $("#serviceCallDate").val();
+            var txtServiceDescription = $("#serviceDescription").val();
+            var txtnotes = $("#notes").val();
+            var hdnLockeyId = $("#hdnLockeyId").val();
+            var hdnSubLockeyId = $("#hdnSubLockeyId").val();
+            var deliveryMethod = $("#deliveryMethodDdl").val();
+            var txtrefundcomments = $("#refundComments").val();
+            var paymentTypeName = $('#paymentTypeDdl').find('option:selected').text();
+            var refundDescription = "";
+            var delivMethod = $("#deliveryMethodDdl option:selected").text();
+            var deliveryText;
+            if (delivMethod.trim() == "Mail Only") {
+                deliveryText = "mailed out";
+            }
+            else {
+                deliveryText = delivMethod.trim();
+            }
+            if (txtRequestedAmount == null || txtRequestedAmount == "" || txtRequestedAmount == 0.00) {
+                refundDescription = txtServiceDescription;
+            }
+            else {
+                var refcont = txtServiceDescription.indexOf('Refund');
+                if (refcont == -1) {
+                    refundDescription = txtServiceDescription + " Refund " + paymentTypeName + " " + deliveryText + ", $" + txtRequestedAmount;
+                }
+                else {
+                    refundDescription = txtServiceDescription;
+                }
+            }
+            //Call types Editing..
+            var hdncalltype = $("#hdncalltype").val();
+            var calltypeeditval = $('#callTypeDdl').find('option:selected').text();
+            var callTypeEdit = calltypeeditval.slice(0, 2);
+            if (hdncalltype == 1) {
+                if (callTypeEdit.trim() == "S" || callTypeEdit == "SA" || callTypeEdit == "SO" || callTypeEdit == "BS" || callTypeEdit == "BO" || callTypeEdit.trim() == "R" || callTypeEdit == "SM" || callTypeEdit.trim() == "C" || callTypeEdit.trim() == "U") {
+                }
+                else {
+                    $("#messageText").html("");
+                    $("#messageText").html(callTypesMessage1);
+                    message();                    
+                    $("#divLoader").hide();
+                    $("#divLoader").attr("itemid", 1);
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+            }
+            if (hdncalltype == 2) {
+                if (callTypeEdit.trim() == "Z" || callTypeEdit == "ZC" || callTypeEdit == "ZS" || callTypeEdit == "ZX") {
+                }
+                else {
+                    $("#messageText").html("");
+                    $("#messageText").html(callTypesMessage2);
+                    message();                   
+                    $("#divLoader").hide();
+                    $("#divLoader").attr("itemid", 1);
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+            }
+            //Refund amount should be a required field
+            var callTypeval = $('#callTypeDdl').find('option:selected').text();
+            var callTypeslice = callTypeval.slice(0, 2);
+            if (callTypeslice != null) {
+                if (callTypeslice.trim() == "QR") {
+                    if (txtRequestedAmount == null || txtRequestedAmount == "" || txtRequestedAmount == 0.00) {
+                        $("#messageText").html("");
+                        $("#messageText").html(refundMessage);
+                        message();                       
+                        $("#divLoader").hide();
+                        $("#divLoader").attr("itemid", 1);
+                        $(".k-overlay").css("display", "none");
+                        return false;
+                    }
+                }
+            }
+            //Session data
+            var userDetails = $.localStorage;
+            var userKeyId = userDetails.get('userKeyId');
+
+            //Edit time Refund Skip
+            var hdnRefundSkip = $("#hdnRefundSkip").val();
+
+            //Equipment and problem description data
+            var equipArray = new Array();
+            var prblmArray = new Array();
+            if (equipArray.length > 0) {
+                equipArray.clear();
+                prblmArray.clear();
+            }
+
+            $(".EquipTxtbxs").each(function () {
+                var txtval = $(this).val();
+                if (txtval != "") {
+                    equipArray.push(txtval);
+                }
+            });
+           
+            var i = 0;
+            var problemtext = 0;
+            var equiptext = $("#EquipmentID_00").val();
+            if (equiptext == "") {
+                problemtext = 0;
+            } else {
+                problemtext = 1;
+            }
+            $(".PrblmTxtbxs").each(function () {
+                var txtval = $(this).val();
+                if (i != 0) {
+                    if (txtval.trim() == "") {
+                        problemtext = 1;
+                        prblmArray.push("");
+                    } else {
+                        prblmArray.push(txtval);
+                    }
+                }
+                i++;
+            });            
+
+            var servicedesc = serviceDescription();
+            //notes text adding..
+            if (txtnotes.trim() != "") {
+                refundDescription = txtnotes + "^" + servicedesc;
+                txtServiceDescription = txtnotes + "^" + servicedesc;
+            } else {
+                refundDescription = servicedesc;
+                txtServiceDescription = servicedesc;
+            }
+            
+            //Problem description should not be empty.
+            if (problemtext == 0) {
+                var equipmentsList = equipArray;
+                var problemsList = prblmArray;
+              
+                //Url Validation  
+                //if (/^[a-zA-Z0-9- ]*$/.test(txtRequestedAmount) == false) {
+                //    txtRequestedAmount = txtRequestedAmount.replace(/([~#!^&_+=`{}\[\]\\\'\? ])+/g, ' ');
+                //}
+                txtContactName = encodeURIComponent(txtContactName);
+                txtCallerPhone = encodeURIComponent(txtCallerPhone);
+                txtCallerApartment = encodeURIComponent(txtCallerApartment);
+                txtCallerAddress = encodeURIComponent(txtCallerAddress);
+                txtCallerCity = encodeURIComponent(txtCallerCity);
+                txtCallerState = encodeURIComponent(txtCallerState);
+                txtCallerZip = encodeURIComponent(txtCallerZip);
+                refundDescription = encodeURIComponent(refundDescription);
+                txtResidentManagerApartment = encodeURIComponent(txtResidentManagerApartment);
+                txtResidentManagerName = encodeURIComponent(txtResidentManagerName);
+                txtResidentManagerPhone = encodeURIComponent(txtResidentManagerPhone);
+                txtrefundcomments = encodeURIComponent(txtrefundcomments);
+                equipmentsList = encodeURIComponent(equipmentsList);
+                problemsList = encodeURIComponent(problemsList);
+                dwellingType = encodeURIComponent(dwellingType);              
+               
+                var uri = url + "api/Appointment?serviceCallId=" + txtServiceCallId.trim() + "&ULN=" + txtUln.trim() + "&reqAmt=" + txtRequestedAmount + "&ctName=" + txtContactName + "&ctPhone=" + txtCallerPhone
+                    + "&clrApt=" + txtCallerApartment.trim() + "&clrAdr=" + txtCallerAddress.trim() + "&clrCity=" + txtCallerCity.trim() + "&clrState=" + txtCallerState.trim() + "&clrZip=" + txtCallerZip.trim()
+                    + "&refundDesc=" + refundDescription + "&refundType=" + refundType + "&paymType=" + paymentType.trim() + "&refCategory=" + refundCategory.trim() + "&country=" + country.trim() + "&locKeyId=" + hdnLockeyId + "&subLocKeyId=" + hdnSubLockeyId
+                    + "&rmCode=" + txtRoomCode.trim() + "&ctTypeId=" + txtContractType + "&mgrApt=" + txtResidentManagerApartment.trim() + "&mgrName=" + txtResidentManagerName.trim() + "&mgrPhone=" + txtResidentManagerPhone.trim()
+                    + "&serviceGroup=" + txtServiceGroup + "&serviceCallDate=" + txtServiceCallDate + "&priority=" + txtPriority.trim() + "&refundReason=" + txtrefundcomments + "&userKeyId=" + userKeyId + "&equipList=" + equipmentsList + "&probList=" + problemsList + "&isRefund=" + hdnRefundSkip
+                    + "&dwellingType=" + dwellingType + "&deliveryMethod=" + deliveryMethod;
+                //uri = encodeURIComponent(uri);
+                $.ajax({
+                    url: uri,
+                    jsonp: "callBack",
+                    type: "GET",
+                    jsonpCallback: "appointmentSaveCallBack",
+                    dataType: 'jsonp',                    
+                    success: function () {                       
+                    },
+                    error: function () {
+                    }
+                });
+            } else {
+                //loading image close..
+                $("#divLoader").hide();
+                $("#divLoader").attr("itemid", 1);
+                $("#errorText").html("");
+                $("#errorText").html(problemDescriptionEmptyMessage);
+                errorMessage();                
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+            return false;
+        });
+
+        //Cancel Ticket button click
+        $(document).on("click", "#btncancelTicket", function () {
+            var reson = $("#descriptionDdl option:selected").text();
+            $("#cnfMessage").html("Do you want to cancel the existing ticket \r\n for the following reason(" + reson + ")");
+            confirmationWindow();           
+            $(".k-overlay").css("display", "none");
+        });
+
+        //cancel ticket confirmation window ok button click function.
+        $("#cnfbtnOk").click(function () {           
+            confirmationWindow(true);
+            $(".k-overlay").css("display", "none");
+            //Loading image
+            $("#divLoader").attr("itemid", 0);
+            setTimeout(function () {
+                var value = $("#divLoader").attr("itemid");
+                if (value == "1") {
+                } else {
+                    $("#divLoader").show();
+                }
+            }, 3000);
+            //Session data
+            var userDetails = $.localStorage;
+            var userKeyId = userDetails.get('userKeyId');
+            var reason = $("#descriptionDdl option:selected").text();
+            var txtServiceCallId = $("#serviceCallId").val();
+            var country = $("#country").val();           
+            var uri = url + 'api/Appointment?serviceCallId=' + txtServiceCallId.trim() + '&country=' + country + '&reason=' + reason + '&userKeyId=' + userKeyId;
+            $.ajax({
+                url: uri,
+                jsonp: "callBack",
+                type: "GET",
+                jsonpCallback: "cancelTicketCallBack",
+                dataType: 'jsonp',
+                success: function () {
+                },               
+                error: function () {
+                    $("#successText").html("");
+                    $("#successText").html(cancelTicketErrorMessage);
+                }
+            });
+
+        });
+
+        //cancel ticket confirmation window cancel button click function.
+        $("#cnfbtnCancel").click(function () {
+            confirmationWindow(true);
+            $(".k-overlay").css("display", "none");
+            return false;
+        });
+
+        //Loctio Grid empty cell double click service call page opening function
+        $(document).on("dblclick", "#LocationGrid tbody td", function () {
+
+            var hdnwindow = $("#hdnwindow").val();
+            if (hdnwindow == 0) {
+                var row = $(this).closest("tr");
+                //var rowIdx = $("tr", grid.tbody).index(row);
+                //var colIdx = $("td", row).index(this);
+                var value = $(this).text();
+                if (value == "") {
+                    var locKeyId = $("td", row).eq(13).text(); //LocationKeyID
+                    var subLocKeyId = $("td", row).eq(14).text(); //SubLocationKeyId
+                    var country = $("#country").val();
+                    var serviceCallId = "";
+                    //var uln = $(this).attr("dir");
+                    var uln = $("td input", row).eq(0).val();
+                    var callerName = $("#callerName").val();
+                    var callerPhone = $("#callerPhone").val();
+                    var equipmentId = "";
+                    var apartmentNo = $("#apartmentNo").val();
+                    var roomCode = $("td", row).eq(9).text();
+                    $("#hdnRoomCode").val(roomCode);
+                    $("#hdnULN").val(uln);
+                    $("#hdnLockeyId").val(locKeyId);
+                    $("#hdnSubLockeyId").val(subLocKeyId);
+                    //Session data
+                    var userDetails = $.localStorage;
+                    var userKeyId = userDetails.get('userKeyId');
+
+                    var callType = $("#calltype").val();
+                    $("#divCancelTicket").css("display", "none");
+
+                    var uri = url + 'api/appointment?locKeyId=' + locKeyId.trim() + '&subLocKeyId=' + subLocKeyId.trim() + '&country=' + country.trim() + '&serviceCallId=' + serviceCallId.trim()
+                                + '&uln=' + uln.trim() + '&callerName=' + callerName.trim() + '&callerPhone=' + callerPhone.trim() + '&equipmentId=' + equipmentId.trim()
+                                + '&apartmentNo=' + apartmentNo.trim() + '&callType=' + callType + '&roomCode=' + roomCode + '&userKeyId=' + userKeyId;
+
+                    //Error Message
+                    var locationOnHold = $("td", row).eq(15).text();
+                    var activeLocation = $("td", row).eq(16).text();
+                    var isBillableLocation = $("td", row).eq(17).text();
+                    //var isBillableLocation = $("td", row).eq(18).text();
+
+                    $("#hdnlocationOnHold").val(locationOnHold);
+                    $("#hdnactiveLocation").val(activeLocation);                    
+                    $("#hdnIsBillable").val(isBillableLocation);
+
+                    serviceCallEntry(uri);
+                    $("#callerAddress").removeAttr('disabled');
+                    $("#callerCity").removeAttr('disabled');
+                    $("#callerState").removeAttr('disabled');
+                    $("#callerZip").removeAttr('disabled');
+                    $("#refundComments").removeAttr('disabled');
+                    $("#requestAmount").removeAttr('disabled');
+
+                    $("#deliveryMethodDdl").removeAttr('disabled');
+                    $("#paymentTypeDdl").removeAttr('disabled');
+                    $("#refundTypeDdl").removeAttr('disabled');
+                    $("#categoryDdl").removeAttr('disabled');
+                    $("#window_wnd_title").text("ServiceCall Details");
+                    var machinesuri;
+                    machinesuri = url + 'api/equipment?uln=' + uln.trim() + '&locKeyId=' + locKeyId.trim() + '&subLocKeyId=' + subLocKeyId.trim() + '&country=' + country.trim() + '&userKeyId=' + userKeyId;
+                    $("#gridtable").show();
+
+                    //macnhines grid above hyper link state maintaining..
+                    var gridstate = $("#hdngridstate").val();
+                    if (gridstate == 0) {
+                        $("#machonLoc").hide();
+                        $("#machonLaundryRoom").show();
+                        var machinesOn = "Machines in Laundry Room";
+                        var machinelocationuri = url + 'api/equipment?uln=' + uln.trim() + '&machinesOn=' + machinesOn + '&roomcode=' + roomCode + '&country=' + country + '&userKeyId=' + userKeyId;
+                        machinesGrid(machinelocationuri);
+                    }
+                    else {
+                        $("#machonLoc").show();
+                        $("#machonLaundryRoom").hide();
+                        machinesuri = url + 'api/equipment?uln=' + uln.trim() + '&locKeyId=' + locKeyId.trim() + '&subLocKeyId=' + subLocKeyId.trim() + '&country=' + country.trim() + '&userKeyId=' + userKeyId;
+                        machinesGrid(machinesuri);
+                    }
+
+
+                    //Edit time Refund Skip
+                    $("#hdnRefundSkip").val(0);
+
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+            }
+            return false;
+        });
+
+        //Location grid empty cell double click popup open function        
+        $(document).on("click", "#LocationGrid tbody td", function () {
+            $('.ULN').each(function () {
+                $(this).closest('tr').removeClass("highlight1");
+                $(this).closest('tr').removeClass("k-state-selected");
+            });
+            $(this).closest('tr').addClass("highlight1");
+        });
+
+        //Machine grid click row highlighting
+        $(document).on("click", "#MachinesGrid tbody td", function () {
+            $('.MachinesGrid').each(function () {
+                $(this).closest('tr').removeClass("highlight1");
+                $(this).closest('tr').removeClass("k-state-selected");
+            });
+            $(this).closest('tr').addClass("highlight1");
+        });
+
+        //Appontment grid mouse over highlight the select row
+        $(document).on("mouseover", "#AppointmentsGrid tbody td", function () {
+            $(this).closest('tr').addClass("highlight");
+            $(this).closest('tr').css("cursor", "pointer");
+        });
+        //Appontment grid mouse out highlight removing
+        $(document).on("mouseout", "#AppointmentsGrid tbody td", function () {
+            $(this).closest('tr').removeClass("highlight");
+        });
+        //Location grid mouse over highlight the select row
+        $(document).on("mouseover", "#LocationGrid tbody td", function () {
+            $(this).closest('tr').addClass("highlight");
+        });
+        //Location grid mouse out highlight removing
+        $(document).on("mouseout", "#LocationGrid tbody td", function () {
+            $(this).closest('tr').removeClass("highlight");
+        });
+        //Machines grid mouse over highlight the select row
+        $(document).on("mouseover", "#MachinesGrid tbody td", function () {
+            $(this).closest('tr').addClass("highlight");
+        });
+        //Machines grid mouse out highlight removing
+        $(document).on("mouseout", "#MachinesGrid tbody td", function () {
+            $(this).closest('tr').removeClass("highlight");
+        });
+
+        //Refund amount textbox validation.
+        $("#requestAmount").keypress(function (e) {           
+            var key;
+            var text;
+            key = (e.which) ? e.which : e.keyCode;
+            text = $(this).val();            
+            
+            if ((key != 46 || text.indexOf('.') != -1) && (key < 45 || key > 57)) {
+                e.preventDefault();
+            }
+            if ((text.indexOf('.') != -1) && (text.substring(text.indexOf('.'), text.indexOf('.').length).length > 2)) {//After "." it will allows the 2 digits
+                e.preventDefault();
+            } 
+        });
+
+    });   
+
+        //Appointment save callback function.
+        function appointmentSaveCallBack(data) {           
+            //loading image close..
+            $("#divLoader").hide();
+            $("#divLoader").attr("itemid", 1);
+            if (data != null && data != "") {
+                if (data.insertFailure) {
+                    $("#errorText").html("");
+                    $("#errorText").html(data.description);
+                    errorMessage();                               
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                } else {
+                    closePopup();
+                    $("#successText").html("");
+                    $("#successText").html(data.description);
+                    successMessage();                                
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+            } else {
+                $("#messageText").html("");
+                $("#messageText").html(saveErrorMessage);
+                message();                           
+                $(".k-overlay").css("display", "none");
+                return false;
+            }
+        }
+
+        //Service call entry page geting values callback function(Appointment Grid click) 
+        function callEntryValues(data) {     
+            if (data.isException) {
+                $("#divLoader").hide();
+                $("#divLoader").attr("itemid", 1);
+                $("#errorText").html("");
+                $("#errorText").html(excetptionMessage + data.exceptionMessage);
+                errorMessage();               
+                $(".k-overlay").css("display", "none");
+                return false;
+            } else {
+                servicecallEntryvaluesAdding(data);
+                //Error Message          
+                var locationOnHold = $("#hdnlocationOnHold").val();
+                var activeLocation = $("#hdnactiveLocation").val();           
+                var isBillableLocation = $("#hdnIsBillable").val();
+                var callType = $("#hdnCallText").val();
+                var status = $("#hdnStatus").val();
+                openPopupAppointment(locationOnHold, activeLocation, isBillableLocation, callType, status);
+            }
+            return false;
+        }
+
+        //Service call entry page geting values callback function.
+        function callEntryPopup(data) {
+            if (data.isException) {
+                $("#divLoader").hide();
+                $("#divLoader").attr("itemid", 1);
+                $("#errorText").html("");
+                $("#errorText").html(excetptionMessage + data.exceptionMessage);
+                errorMessage();               
+                $(".k-overlay").css("display", "none");
+                return false;
+            } else {
+                servicecallEntryvaluesAdding(data);
+                //Error Message          
+                var locationOnHold = $("#hdnlocationOnHold").val();
+                var activeLocation = $("#hdnactiveLocation").val();
+                var isBillableLocation = $("#hdnIsBillable").val();
+
+                openPopup(locationOnHold, activeLocation, isBillableLocation);
+            }
+            return false;
+        }
+
+        //Cancel ticket callback function.
+        function cancelTicketCallBack(data) { 
+            $("#divLoader").hide();
+            $("#divLoader").attr("itemid", 1);
+            closePopup();
+            $("#descriptionDdl").val(1);
+            $("#successText").html("");
+            $("#successText").html(data);
+            successMessage();        
+            $(".k-overlay").css("display", "none");
+            return false;
+        }
+
+        //service call entry page all textboxes binding data
+        function servicecallEntryvaluesAdding(data) {
+
+            $("#DynamicTextboxes").html("");
+
+            loadDynamicTextboxes(data);
+
+            $("#serviceCallId").val(data.serviceCallId);
+            $("#lineofBusiness").val(data.lineofBusiness);
+            $("#Uln").val(data.uln);
+            $("#locationName").val(data.locationName);
+            $("#address").val(data.address);
+            $("#contractType").val(data.contactType);
+            $("#shortDescription").val(data.specialInstruction);
+            $("#branch").val(data.branch);
+            $("#mapPage").val(data.mapPage);
+            $("#serviceGroup").val(data.serviceGroup);
+            $("#collectionRoute").val(data.collectionRoute);
+            $("#roomCode").val(data.roomCode);
+            $("#roomName").val(data.roomName);
+            $("#roomLoactionName").val(data.locationName);
+            $("#roomAddress").val(data.roomAddress);
+            $("#roomCtz").val(data.roomCTZ);
+            $("#serviceCallDate").val(data.serviceCallDate);
+            $("#priority").val(data.priority);
+            $("#clrName").val(data.contactName);
+            $("#clrPhone").val(data.callerPhone);
+            $("#callerApartment").val(data.callerApartment);
+            $("#callerAddress").val(data.address);
+            $("#callerCity").val(data.callerCity);
+            $("#callerState").val(data.callerState);
+            $("#callerZip").val(data.callerZip);
+            $("#requestAmount").val(data.requestAmount);
+            $("#residentManagerName").val(data.residentManagerName);
+            $("#residentManagerPhone").val(data.residentManagerPhone);
+            $("#residentManagerApartment").val(data.residentManagerApartment);
+            $("#refundComments").val(data.refundComments);
+
+            //
+            $("#txtWasherPrice").val(data.washerPrice);
+            $("#txtDryerPrice").val(data.dryerPrice);
+
+            //notes text adding..
+            if (data.serviceDescription != null || data.serviceDescription == "") {
+                if (data.serviceDescription.indexOf('^') > -1) {
+                    var description = data.serviceDescription.split('^');
+                    $("#serviceDescription").val(description[0] + "\r\n" + description[1]);
+                    $("#notes").val(description[0]);
+                }
+                else {
+                    $("#serviceDescription").val(data.serviceDescription);
+                }
+            }
+
+            //
+            $("#EquipmentID_00").val(data.equipmentId);
+
+            //cancel ticket reason getting..
+            var country = $("#country").val();
+            //Session data
+            var userDetails = $.localStorage;
+            var userKeyId = userDetails.get('userKeyId');
+
+            var uri = url + 'api/appointment?serviceCallId=' + data.serviceCallId.trim() + '&country=' + country + '&userKeyId=' + userKeyId;
+            cancelTicketReason(uri);
+
+            dropdownsdataAdding(data);
+
+        }
+    
+        //Existing service call loading equipmentid and problem description..
+        function loadDynamicTextboxes(data) {
+            var currentid = 0;
+            if (data.equipmentsList != null) {
+                for (var i = 0; i < data.equipmentsList.length; i++) {
+                    //console.log(data.EquipmentIdList[i]);
+                    $("#Delete_00").show();
+                    var newElement = $('#staticTxtboxes_00').clone();
+                    var id = currentid + 1;
+                    currentid = id;
+                    if (id < 10) id = "0" + id;
+                    newElement.attr("id", $('#staticTxtboxes_00').attr("id").split("_")[0] + "_" + id);
+                    //Equipment Textbox
+                    var field1 = $("#EquipmentID_00", newElement).attr("id");
+                    $("#EquipmentID_00", newElement).attr("id", field1.split("_")[0] + "_" + id);
+                    $("#EquipmentID_" + id, newElement).val(data.equipmentsList[i]);
+                    //Problem Textbox
+                    var field2 = $("#Problem_00", newElement).attr("id");
+                    $("#Problem_00", newElement).attr("id", field2.split("_")[0] + "_" + id);
+                    $("#Problem_" + id, newElement).val(data.problemsList[i]);
+                    //Equipment Validata span
+                    var field3 = $("#ValidateEquitment_00", newElement).attr("id");
+                    $("#ValidateEquitment_00", newElement).attr("id", field3.split("_")[0] + "_" + id);
+                    if (data.validateList[i] == "false") {
+                        $("#ValidateEquitment_" + id, newElement).attr("lang", "1");
+                        $("#ValidateEquitment_" + id, newElement).show();
+                    } else {
+                        $("#ValidateEquitment_" + id, newElement).attr("lang", "0");
+                        $("#ValidateEquitment_" + id, newElement).hide();
+                    }
+
+                    //Delete span 
+                    var field4 = $("#Delete_00", newElement).attr("id");
+                    $("#Delete_00", newElement).attr("id", field4.split("_")[0] + "_" + id);
+
+                    newElement.appendTo($("#DynamicTextboxes"));
+                    $("#Delete_00").hide();
+                }
+            }
+        }
+
+        //Popup's open function
+        function openPopup(locationOnHold, activeLocation, isBillableLocation) {
+            enableFields();
+            //Loading images closeed...
+            $("#divLoader").hide();
+            $("#divLoader").attr("itemid", 1);
+            //
+            $("#window").show();
+            $("#callTypeDdl").removeAttr("disabled");
+            $("#btnSave").removeAttr("disabled");
+            $("#btnEmail").removeAttr("disabled");
+            $("#callerAddress").removeAttr("disabled");
+            $("#callerCity").removeAttr("disabled");
+            $("#callerState").removeAttr("disabled");
+            $("#callerZip").removeAttr("disabled");
+            $("#hdncalltype").val(0);
+            //serivce call page
+            //setTimeout(function () {
+                myWindow();
+            //}, 500);
+
+            if (locationOnHold == "false" && activeLocation == "false" && isBillableLocation == "false") {
+
+            } else {
+                $("#btnSave").attr("disabled", "disabled");
+                $("#btncancelTicket").attr("disabled", "disabled");
+                //$("#btnEmail").attr("disabled", "disabled");
+                if (locationOnHold.trim() == customerHold) {
+                    $("#messageText").html("");
+                    $("#messageText").html(customerHoldMessage);
+                    message();                
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+                if (activeLocation.trim() == customerActiveLocation) {
+                    $("#messageText").html("");
+                    $("#messageText").html(customerActiveLocationMessage);
+                    message();
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+                if (isBillableLocation.trim() == billable) {
+                    $("#btnSave").removeAttr("disabled");
+                    $("#messageText").html("");
+                    $("#messageText").html(privateServiceMessage);
+                    message();
+                    $(".k-overlay").css("display", "none");
+                    return false;
+                }
+
+            }
+            //If Room Number is Empty --> it is a special Scenario
+            var roomCode = $("#roomCode").val();
+            if (roomCode == "" || roomCode == null) {
+                $("#messageText").html("");
+                $("#messageText").html(roomNumberEmptyMessage);
+                message();
+                $(".k-overlay").css("display", "none");
+                $("#btnSave").attr("disabled", "disabled");
+                $("#btncancelTicket").attr("disabled", "disabled");
+                $("#btnEmail").attr("disabled", "disabled");
+            }
+            $(".k-overlay").css("display", "none");
+            $("#EquipmentID_00").focus();
+            return false;
+        }
+
+        //Edit Popup open function
+        function openPopupAppointment(locationOnHold, activeLocation, isBillable, callType, status) {           
+            //Loading images closeed...
+            $("#divLoader").hide();
+            $("#divLoader").attr("itemid", 1);
+            //
+            $("#window").show();
+
+           
+            //serivce call page
+            setTimeout(function () {
+                myWindow();
+            }, 1000);           
+       
+            var callTypeID = callType.slice(0, 2);
+
+            if (callTypeID == "TP" || callTypeID.trim() == "D") {
+
+                disableFields();
+                $("#callTypeDdl").attr("disabled", "disabled");
+                $("#btnSave").attr("disabled", "disabled");
+                $("#btncancelTicket").attr("disabled", "disabled");
+                //$("#btnEmail").attr("disabled", "disabled");
+                $("#descriptionDdl").attr("disabled", "disabled");
+
+                $('#staticTxtboxes_00').find('input').attr('readonly', true);
+                $('#DynamicTextboxes').find('input').attr('readonly', true);
+                $('#DynamicTextboxes').find(".deletebtn").css("display", "none");
+
+                $("#messageText").html("");
+                $("#messageText").html("You can not Edit or Cancel " + callType + " CallTtype");
+                setTimeout(function () {
+                    message();                   
+                    $(".k-overlay").css("display", "none");
+                }, 1000);
+                $("#hdncalltype").val(0);
+                return false;
+            } else if (callTypeID.trim() == "F" || callTypeID == "IS" || callTypeID == "LS" || callTypeID == "PS" || callTypeID == "QK" || callTypeID == "QR" || callTypeID == "VC" || callTypeID.trim() == "W") {
+                enableFields();
+                $("#callTypeDdl").attr("disabled", "disabled");
+                $("#btnSave").removeAttr("disabled");
+                $("#btncancelTicket").removeAttr("disabled");
+                $("#btnEmail").removeAttr("disabled");
+                $("#descriptionDdl").removeAttr("disabled");
+                $("#hdncalltype").val(0);
+            } else if (callTypeID.trim() == "S" || callTypeID == "SA" || callTypeID == "SO" || callTypeID == "BS" || callTypeID == "BO" || callTypeID.trim() == "R" || callTypeID == "SM" || callTypeID.trim() == "C" || callTypeID.trim() == "U") {
+                enableFields();
+                $("#callTypeDdl").removeAttr("disabled");
+                $("#btnSave").removeAttr("disabled");
+                $("#btncancelTicket").removeAttr("disabled");
+                $("#btnEmail").removeAttr("disabled");
+                $("#descriptionDdl").removeAttr("disabled");
+                $("#hdncalltype").val(1);
+            } else if (callTypeID.trim() == "Z" || callTypeID == "ZC" || callTypeID == "ZS" || callTypeID == "ZX") {
+                enableFields();
+                $("#callTypeDdl").removeAttr("disabled");
+                $("#btnSave").removeAttr("disabled");
+                $("#btncancelTicket").removeAttr("disabled");
+                $("#btnEmail").removeAttr("disabled");
+                $("#descriptionDdl").removeAttr("disabled");
+                $("#hdncalltype").val(2);
+            } else {
+                //EnableFields();
+                // $("#callTypeDdl").attr("disabled", "disabled");
+                $("#hdncalltype").val(0);
+            }
+
+            //Appointment grid Status
+            if (status.trim() == "DEFAULT" || status.trim() == "OPEN-TD" || status.trim() == "OPEN" || status.trim() == "UNASSIGNED") {
+                $("#btnSave").removeAttr("disabled");
+                $("#btncancelTicket").removeAttr("disabled");
+                $("#btnEmail").removeAttr("disabled");
+                $("#descriptionDdl").removeAttr("disabled");
+            }
+            else {
+                $("#btnEmail").removeAttr("disabled");
+                $("#btnSave").attr("disabled", "disabled");
+                $("#btncancelTicket").attr("disabled", "disabled");
+                //$("#btnEmail").attr("disabled", "disabled");
+                $("#descriptionDdl").attr("disabled", "disabled");
+                $("#messageText").html("");
+                $("#messageText").html(callStatusMessage);
+                setTimeout(function () {
+                    message();                
+                    $(".k-overlay").css("display", "none");
+                }, 1000);
+                return false;
+            }
+
+            //Edit option available based on users
+            var userDetails = $.localStorage;
+            var userRole = userDetails.get('userRole');
+            if (userRole == csrCanadaNE || userRole == csrUsNE) {
+                $("#btnSave").attr("disabled", "disabled");
+            }
+
+            //If Room Number is Empty --> it is a special Scenario
+            var roomCode = $("#roomCode").val();
+            if (roomCode == "" || roomCode == null) {
+                $("#messageText").html("");
+                $("#messageText").html(roomNumberEmptyMessage);
+                message();
+           
+                $(".k-overlay").css("display", "none");
+                $("#btnSave").attr("disabled", "disabled");
+                $("#btncancelTicket").attr("disabled", "disabled");
+                $("#btnEmail").attr("disabled", "disabled");
+            }
+            $(".k-overlay").css("display", "none");
+            $("#EquipmentID_00").focus();
+            return false;
+        }
+
+        //Disable Fields while Edit Time
